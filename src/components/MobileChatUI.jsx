@@ -209,36 +209,42 @@ function ChatHeader() {
 
 // ─── Message Bubbles ─────────────────────────────────────────────────────────
 
-function OutBubble({ children, onHold }) {
+function OutBubble({ children, onHold, reaction }) {
   const timer = useRef(null)
   const startPress = () => { timer.current = setTimeout(() => onHold?.(), 420) }
   const cancelPress = () => clearTimeout(timer.current)
   return (
-    <div
-      className="chat-bubble bg-[#f1f1f1] rounded-[16px] px-3 py-2 flex-shrink-0 select-none"
-      onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
-      onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
-    >
-      <p className="text-[#06080b] text-base font-medium leading-5 tracking-[-0.7px]">
-        {children}
-      </p>
+    <div className="relative flex-shrink-0">
+      <div
+        className="chat-bubble bg-[#f1f1f1] rounded-[16px] px-3 py-2 select-none"
+        onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
+        onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
+      >
+        <p className="text-[#06080b] text-base font-medium leading-5 tracking-[-0.7px]">
+          {children}
+        </p>
+      </div>
+      {reaction && <ReactionBadge emoji={reaction} light />}
     </div>
   )
 }
 
-function InBubble({ children, onHold }) {
+function InBubble({ children, onHold, reaction }) {
   const timer = useRef(null)
   const startPress = () => { timer.current = setTimeout(() => onHold?.(), 420) }
   const cancelPress = () => clearTimeout(timer.current)
   return (
-    <div
-      className="chat-bubble bg-[#1f2937] rounded-[16px] px-3 py-2 flex-shrink-0 select-none"
-      onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
-      onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
-    >
-      <p className="text-white text-base font-medium leading-5 tracking-[-0.7px]">
-        {children}
-      </p>
+    <div className="relative flex-shrink-0">
+      <div
+        className="chat-bubble bg-[#1f2937] rounded-[16px] px-3 py-2 select-none"
+        onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
+        onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
+      >
+        <p className="text-white text-base font-medium leading-5 tracking-[-0.7px]">
+          {children}
+        </p>
+      </div>
+      {reaction && <ReactionBadge emoji={reaction} />}
     </div>
   )
 }
@@ -247,6 +253,14 @@ function UserAvatar() {
   return (
     <div className="w-8 h-8 rounded-full overflow-hidden bg-[#0b0e10] flex-shrink-0">
       <img src={AVATAR} alt="" className="w-full h-full object-cover" />
+    </div>
+  )
+}
+
+function ReactionBadge({ emoji, light }) {
+  return (
+    <div className={`absolute -bottom-[10px] -right-[6px] w-9 h-9 rounded-full flex items-center justify-center text-lg z-10 border-[3px] border-[#06080b] ${light ? 'bg-[#e2e2e2]' : 'bg-[#2a3a4a]'}`}>
+      {emoji}
     </div>
   )
 }
@@ -276,13 +290,19 @@ function StackedImages({ onOpen, onHold }) {
   )
 }
 
-function IncomingCluster1({ time, onHold }) {
+function IncomingCluster1({ time, onHold, reactions = {} }) {
   return (
     <div className="flex items-end gap-2.5">
       <UserAvatar />
       <div className="flex flex-col gap-1.5">
-        <InBubble onHold={() => onHold?.('Oh wow 😄')}>Oh wow 😄</InBubble>
-        <InBubble onHold={() => onHold?.('Those pictures are so beautiful! Are you using AI tools for these too?')}>
+        <InBubble
+          onHold={() => onHold?.({ text: 'Oh wow 😄', msgId: 'si-1a' })}
+          reaction={reactions['si-1a']}
+        >Oh wow 😄</InBubble>
+        <InBubble
+          onHold={() => onHold?.({ text: 'Those pictures are so beautiful! Are you using AI tools for these too?', msgId: 'si-1b' })}
+          reaction={reactions['si-1b']}
+        >
           Those pictures are so beautiful! Are you using AI tools for these too?
         </InBubble>
         {time && <Ts time={time} align="left" />}
@@ -291,13 +311,19 @@ function IncomingCluster1({ time, onHold }) {
   )
 }
 
-function IncomingCluster2({ onOpen, time, onHold }) {
+function IncomingCluster2({ onOpen, time, onHold, reactions = {} }) {
   return (
     <div className="flex items-end gap-2.5">
       <UserAvatar />
       <div className="flex flex-col gap-1.5">
-        <InBubble onHold={() => onHold?.("Wait I'll show you something")}>Wait I'll show you something</InBubble>
-        <InBubble onHold={() => onHold?.("I generated this yesterday when I couldn't sleep 😅")}>
+        <InBubble
+          onHold={() => onHold?.({ text: "Wait I'll show you something", msgId: 'si-2a' })}
+          reaction={reactions['si-2a']}
+        >Wait I'll show you something</InBubble>
+        <InBubble
+          onHold={() => onHold?.({ text: "I generated this yesterday when I couldn't sleep 😅", msgId: 'si-2b' })}
+          reaction={reactions['si-2b']}
+        >
           I generated this yesterday when I couldn't sleep 😅
         </InBubble>
         <div
@@ -556,7 +582,7 @@ function SentImageMessage({ images, onOpen, onHold }) {
 
 const REACTIONS = ['🔥', '😭', '🙈', '❤️', '😄', '🙏', '💪']
 
-function MessageContextMenu({ message, onClose }) {
+function MessageContextMenu({ message, onClose, onReact }) {
   const handleCopy = () => {
     if (message.text) navigator.clipboard?.writeText(message.text)
     onClose()
@@ -600,7 +626,7 @@ function MessageContextMenu({ message, onClose }) {
               <button
                 key={emoji}
                 className="text-[28px] flex-shrink-0 transition-transform active:scale-125"
-                onClick={onClose}
+                onClick={() => onReact(emoji)}
               >
                 {emoji}
               </button>
@@ -791,6 +817,7 @@ export default function MobileChatUI() {
   const [lightbox,        setLightbox]        = useState(null)
   const [pendingImages,   setPendingImages]   = useState(null)
   const [heldMessage,     setHeldMessage]     = useState(null)
+  const [reactions,       setReactions]       = useState({})
 
   const scrollToBottom = () => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -800,10 +827,16 @@ export default function MobileChatUI() {
   useEffect(() => { scrollToBottom() }, [sentMessages])
   useEffect(() => () => clearInterval(timerRef.current), [])
 
+  const handleReact = (emoji) => {
+    if (!heldMessage?.msgId) return
+    setReactions(prev => ({ ...prev, [heldMessage.msgId]: emoji }))
+    setHeldMessage(null)
+  }
+
   const handleSend = () => {
     const text = inputValue.trim()
     if (!text) return
-    setSentMessages(prev => [...prev, { type: 'text', text, time: nowTime() }])
+    setSentMessages(prev => [...prev, { id: `s-${Date.now()}`, type: 'text', text, time: nowTime() }])
     setInputValue('')
   }
 
@@ -812,7 +845,7 @@ export default function MobileChatUI() {
       clearInterval(timerRef.current)
       setIsRecording(false)
       setIsPaused(false)
-      setSentMessages(prev => [...prev, { type: 'voice', duration: recordingTime, time: nowTime() }])
+      setSentMessages(prev => [...prev, { id: `s-${Date.now()}`, type: 'voice', duration: recordingTime, time: nowTime() }])
       setRecordingTime(0)
     } else {
       setIsRecording(true)
@@ -849,7 +882,7 @@ export default function MobileChatUI() {
   }
 
   const handleConfirmImages = () => {
-    setSentMessages(prev => [...prev, { type: 'images', urls: pendingImages, time: nowTime() }])
+    setSentMessages(prev => [...prev, { id: `s-${Date.now()}`, type: 'images', urls: pendingImages, time: nowTime() }])
     setPendingImages(null)
   }
 
@@ -888,7 +921,7 @@ export default function MobileChatUI() {
       )}
 
       {heldMessage && (
-        <MessageContextMenu message={heldMessage} onClose={() => setHeldMessage(null)} />
+        <MessageContextMenu message={heldMessage} onClose={() => setHeldMessage(null)} onReact={handleReact} />
       )}
 
       {/* Image confirmation sheet */}
@@ -953,13 +986,17 @@ export default function MobileChatUI() {
           <div className="msg-enter" style={{ animationDelay: '0.15s' }}>
             <IncomingCluster1
               time="12:29"
-              onHold={(text) => setHeldMessage({ type: 'text', text, isOutgoing: false })}
+              onHold={({ text, msgId }) => setHeldMessage({ type: 'text', text, isOutgoing: false, msgId })}
+              reactions={reactions}
             />
           </div>
 
           {/* outgoing */}
           <div className="flex flex-col items-end gap-1 msg-enter" style={{ animationDelay: '0.25s' }}>
-            <OutBubble onHold={() => setHeldMessage({ type: 'text', text: "Yeah! I've been playing around with it lately, it's actually super fun to use", isOutgoing: true })}>
+            <OutBubble
+              onHold={() => setHeldMessage({ type: 'text', text: "Yeah! I've been playing around with it lately, it's actually super fun to use", isOutgoing: true, msgId: 'so-text-1' })}
+              reaction={reactions['so-text-1']}
+            >
               Yeah! I've been playing around with it lately, it's actually super fun to use
             </OutBubble>
             <Ts time="12:29" />
@@ -970,7 +1007,8 @@ export default function MobileChatUI() {
             <IncomingCluster2
               onOpen={(images, index) => setLightbox({ images, index })}
               time="12:31"
-              onHold={(text) => setHeldMessage({ type: 'text', text, isOutgoing: false })}
+              onHold={({ text, msgId }) => setHeldMessage({ type: 'text', text, isOutgoing: false, msgId })}
+              reactions={reactions}
             />
           </div>
 
@@ -994,16 +1032,19 @@ export default function MobileChatUI() {
                     {msg.type === 'voice' ? (
                       <SentVoiceBubble
                         duration={msg.duration}
-                        onHold={() => setHeldMessage({ type: 'voice', duration: msg.duration, isOutgoing: true })}
+                        onHold={() => setHeldMessage({ type: 'voice', duration: msg.duration, isOutgoing: true, msgId: msg.id })}
                       />
                     ) : msg.type === 'images' ? (
                       <SentImageMessage
                         images={msg.urls}
                         onOpen={(imgs, idx) => setLightbox({ images: imgs, index: idx })}
-                        onHold={() => setHeldMessage({ type: 'images', isOutgoing: true })}
+                        onHold={() => setHeldMessage({ type: 'images', isOutgoing: true, msgId: msg.id })}
                       />
                     ) : (
-                      <OutBubble onHold={() => setHeldMessage({ type: 'text', text: msg.text, isOutgoing: true })}>
+                      <OutBubble
+                        onHold={() => setHeldMessage({ type: 'text', text: msg.text, isOutgoing: true, msgId: msg.id })}
+                        reaction={reactions[msg.id]}
+                      >
                         {msg.text}
                       </OutBubble>
                     )}
