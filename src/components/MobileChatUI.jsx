@@ -132,6 +132,41 @@ function IconNavigate() {
   return <img src="/img/Send.svg" alt="" width="24" height="24" />
 }
 
+function IconCopy() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect x="8" y="8" width="12" height="12" rx="2" stroke="white" strokeWidth="1.6"/>
+      <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function IconReply() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M9 14L4 9l5-5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function IconForward() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M15 14l5-5-5-5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function IconDeleteAction() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" stroke="rgb(251,92,85)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
 // ─── Status Bar ──────────────────────────────────────────────────────────────
 
 function StatusBar() {
@@ -174,9 +209,16 @@ function ChatHeader() {
 
 // ─── Message Bubbles ─────────────────────────────────────────────────────────
 
-function OutBubble({ children }) {
+function OutBubble({ children, onHold }) {
+  const timer = useRef(null)
+  const startPress = () => { timer.current = setTimeout(() => onHold?.(), 420) }
+  const cancelPress = () => clearTimeout(timer.current)
   return (
-    <div className="chat-bubble bg-[#f1f1f1] rounded-[16px] px-3 py-2 flex-shrink-0">
+    <div
+      className="chat-bubble bg-[#f1f1f1] rounded-[16px] px-3 py-2 flex-shrink-0 select-none"
+      onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
+      onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
+    >
       <p className="text-[#06080b] text-base font-medium leading-5 tracking-[-0.7px]">
         {children}
       </p>
@@ -184,9 +226,16 @@ function OutBubble({ children }) {
   )
 }
 
-function InBubble({ children }) {
+function InBubble({ children, onHold }) {
+  const timer = useRef(null)
+  const startPress = () => { timer.current = setTimeout(() => onHold?.(), 420) }
+  const cancelPress = () => clearTimeout(timer.current)
   return (
-    <div className="chat-bubble bg-[#1f2937] rounded-[16px] px-3 py-2 flex-shrink-0">
+    <div
+      className="chat-bubble bg-[#1f2937] rounded-[16px] px-3 py-2 flex-shrink-0 select-none"
+      onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
+      onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
+    >
       <p className="text-white text-base font-medium leading-5 tracking-[-0.7px]">
         {children}
       </p>
@@ -204,10 +253,17 @@ function UserAvatar() {
 
 // ─── Specific Messages ───────────────────────────────────────────────────────
 
-function StackedImages({ onOpen }) {
+function StackedImages({ onOpen, onHold }) {
+  const timer = useRef(null)
+  const startPress = () => { timer.current = setTimeout(() => onHold?.(), 420) }
+  const cancelPress = () => clearTimeout(timer.current)
   return (
     <div className="flex flex-col items-end gap-2">
-      <div className="stacked-images relative h-[240px] w-[260px]">
+      <div
+        className="stacked-images relative h-[240px] w-[260px] select-none"
+        onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
+        onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
+      >
         <div className="chat-img-back cursor-pointer" onClick={() => onOpen([LANDSCAPE1, LANDSCAPE2], 0)}>
           <img src={LANDSCAPE1} alt="" className="w-full h-full object-cover" />
         </div>
@@ -220,13 +276,13 @@ function StackedImages({ onOpen }) {
   )
 }
 
-function IncomingCluster1({ time }) {
+function IncomingCluster1({ time, onHold }) {
   return (
     <div className="flex items-end gap-2.5">
       <UserAvatar />
       <div className="flex flex-col gap-1.5">
-        <InBubble>Oh wow 😄</InBubble>
-        <InBubble>
+        <InBubble onHold={() => onHold?.('Oh wow 😄')}>Oh wow 😄</InBubble>
+        <InBubble onHold={() => onHold?.('Those pictures are so beautiful! Are you using AI tools for these too?')}>
           Those pictures are so beautiful! Are you using AI tools for these too?
         </InBubble>
         {time && <Ts time={time} align="left" />}
@@ -235,13 +291,13 @@ function IncomingCluster1({ time }) {
   )
 }
 
-function IncomingCluster2({ onOpen, time }) {
+function IncomingCluster2({ onOpen, time, onHold }) {
   return (
     <div className="flex items-end gap-2.5">
       <UserAvatar />
       <div className="flex flex-col gap-1.5">
-        <InBubble>Wait I'll show you something</InBubble>
-        <InBubble>
+        <InBubble onHold={() => onHold?.("Wait I'll show you something")}>Wait I'll show you something</InBubble>
+        <InBubble onHold={() => onHold?.("I generated this yesterday when I couldn't sleep 😅")}>
           I generated this yesterday when I couldn't sleep 😅
         </InBubble>
         <div
@@ -256,8 +312,8 @@ function IncomingCluster2({ onOpen, time }) {
   )
 }
 
-function VoiceMessage() {
-  return <VoiceBubble duration={20} />
+function VoiceMessage({ onHold }) {
+  return <VoiceBubble duration={20} onHold={onHold} />
 }
 
 function TypingIndicator() {
@@ -309,10 +365,13 @@ function Ts({ time, align = 'right' }) {
 
 const SPEED_STEPS = [1, 1.5, 2]
 
-function VoiceBubble({ duration }) {
+function VoiceBubble({ duration, onHold }) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [playbackTime, setPlaybackTime] = useState(0)
   const [speedIdx, setSpeedIdx] = useState(0)
+  const pressTimer = useRef(null)
+  const startPress = () => { pressTimer.current = setTimeout(() => onHold?.(), 420) }
+  const cancelPress = () => clearTimeout(pressTimer.current)
 
   const speed = SPEED_STEPS[speedIdx]
 
@@ -342,7 +401,11 @@ function VoiceBubble({ duration }) {
 
   return (
     <div className="flex items-center justify-end gap-2">
-      <div className="bg-[#f1f1f1] rounded-[16px] px-3 py-2 flex items-center gap-2 flex-shrink-0">
+      <div
+        className="bg-[#f1f1f1] rounded-[16px] px-3 py-2 flex items-center gap-2 flex-shrink-0 select-none"
+        onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
+        onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
+      >
         <button
           onClick={handleToggle}
           className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-[#1f2937]"
@@ -383,8 +446,8 @@ function VoiceBubble({ duration }) {
   )
 }
 
-function SentVoiceBubble({ duration }) {
-  return <VoiceBubble duration={duration} />
+function SentVoiceBubble({ duration, onHold }) {
+  return <VoiceBubble duration={duration} onHold={onHold} />
 }
 
 // ─── Sent image message ───────────────────────────────────────────────────────
@@ -392,15 +455,20 @@ function SentVoiceBubble({ duration }) {
 const SPREAD_TOTAL_W = 340
 const SPREAD_GAP     = 8
 
-function SentImageMessage({ images, onOpen }) {
+function SentImageMessage({ images, onOpen, onHold }) {
   const [hovered, setHovered] = useState(false)
+  const pressTimer = useRef(null)
+  const startPress = () => { pressTimer.current = setTimeout(() => onHold?.(), 420) }
+  const cancelPress = () => clearTimeout(pressTimer.current)
   const n = images.length
 
   if (n === 1) {
     return (
       <div
-        className="w-[164px] h-[200px] rounded-[20px] overflow-hidden cursor-pointer flex-shrink-0"
+        className="w-[164px] h-[200px] rounded-[20px] overflow-hidden cursor-pointer flex-shrink-0 select-none"
         onClick={() => onOpen(images, 0)}
+        onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
+        onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
       >
         <img src={images[0]} alt="" className="w-full h-full object-cover" />
       </div>
@@ -453,7 +521,12 @@ function SentImageMessage({ images, onOpen }) {
         transition: 'width 0.4s cubic-bezier(0.25,0.46,0.45,0.94), height 0.4s cubic-bezier(0.25,0.46,0.45,0.94)',
       }}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={() => { setHovered(false); cancelPress() }}
+      onMouseDown={startPress}
+      onMouseUp={cancelPress}
+      onTouchStart={startPress}
+      onTouchEnd={cancelPress}
+      onTouchMove={cancelPress}
     >
       {images.map((url, i) => (
         <div
@@ -476,6 +549,87 @@ function SentImageMessage({ images, onOpen }) {
         </div>
       ))}
     </div>
+  )
+}
+
+// ─── Message context menu ────────────────────────────────────────────────────
+
+const REACTIONS = ['🔥', '😭', '🙈', '❤️', '😄', '🙏', '💪']
+
+function MessageContextMenu({ message, onClose }) {
+  const handleCopy = () => {
+    if (message.text) navigator.clipboard?.writeText(message.text)
+    onClose()
+  }
+
+  return (
+    <>
+      <div className="absolute inset-0 z-30 backdrop-blur-[3px] bg-[rgba(251,251,251,0.08)]" onClick={onClose} />
+      <div className="absolute bottom-6 left-6 right-6 z-40 bg-[#06080b] rounded-[32px] px-5 pt-4 pb-6 flex flex-col gap-5 context-sheet-enter">
+
+        <div className="flex justify-center pt-1">
+          <div className="w-10 h-[6px] bg-white/20 rounded-full" />
+        </div>
+
+        {/* message preview */}
+        <div className={`flex ${message.isOutgoing ? 'justify-end' : 'justify-start'}`}>
+          {message.type === 'text' && (
+            <div className={`rounded-[16px] px-3 py-2 max-w-[250px] ${message.isOutgoing ? 'bg-[#f1f1f1]' : 'bg-[#1f2937]'}`}>
+              <p className={`text-base font-medium leading-5 tracking-[-0.7px] ${message.isOutgoing ? 'text-[#06080b]' : 'text-white'}`}>
+                {message.text}
+              </p>
+            </div>
+          )}
+          {message.type === 'voice' && (
+            <div className="bg-[#f1f1f1] rounded-[16px] px-3 py-2">
+              <p className="text-[rgba(6,8,11,0.6)] text-base font-medium tracking-[-0.7px]">🎤 Voice message · {message.duration}s</p>
+            </div>
+          )}
+          {message.type === 'images' && (
+            <div className="bg-[#f1f1f1] rounded-[16px] px-3 py-2">
+              <p className="text-[rgba(6,8,11,0.6)] text-base font-medium tracking-[-0.7px]">📷 Photo</p>
+            </div>
+          )}
+        </div>
+
+        {/* emoji reactions */}
+        <div className="flex flex-col gap-[10px]">
+          <span className="text-white/60 text-sm font-medium tracking-[-0.7px]">React</span>
+          <div className="flex gap-3 overflow-x-auto scrollbar-hidden pb-1">
+            {REACTIONS.map(emoji => (
+              <button
+                key={emoji}
+                className="text-[28px] flex-shrink-0 transition-transform active:scale-125"
+                onClick={onClose}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* actions */}
+        <div className="flex flex-col">
+          <button onClick={handleCopy} className="flex items-center justify-between py-3 border-b border-white/[0.06]">
+            <span className="text-white text-sm font-medium tracking-[-0.7px]">Copy</span>
+            <IconCopy />
+          </button>
+          <button onClick={onClose} className="flex items-center justify-between py-3 border-b border-white/[0.06]">
+            <span className="text-white text-sm font-medium tracking-[-0.7px]">Reply</span>
+            <IconReply />
+          </button>
+          <button onClick={onClose} className="flex items-center justify-between py-3 border-b border-white/[0.06]">
+            <span className="text-white text-sm font-medium tracking-[-0.7px]">Forward</span>
+            <IconForward />
+          </button>
+          <button onClick={onClose} className="flex items-center justify-between py-3">
+            <span className="text-[#fb5c55] text-sm font-medium tracking-[-0.7px]">Delete</span>
+            <IconDeleteAction />
+          </button>
+        </div>
+
+      </div>
+    </>
   )
 }
 
@@ -636,6 +790,7 @@ export default function MobileChatUI() {
   const [recordingTime,   setRecordingTime]   = useState(0)
   const [lightbox,        setLightbox]        = useState(null)
   const [pendingImages,   setPendingImages]   = useState(null)
+  const [heldMessage,     setHeldMessage]     = useState(null)
 
   const scrollToBottom = () => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -711,7 +866,7 @@ export default function MobileChatUI() {
   }
 
   return (
-    <div className="relative w-[430px] h-[932px] bg-[#06080b] overflow-hidden rounded-[44px] shadow-2xl">
+    <div className="relative w-full h-dvh bg-[#06080b] overflow-hidden md:w-[430px] md:h-[932px] md:rounded-[44px] md:shadow-2xl">
 
       {/* Hidden file input */}
       <input
@@ -730,6 +885,10 @@ export default function MobileChatUI() {
           onClose={() => setLightbox(null)}
           onChangeIndex={(i) => setLightbox(lb => ({ ...lb, index: i }))}
         />
+      )}
+
+      {heldMessage && (
+        <MessageContextMenu message={heldMessage} onClose={() => setHeldMessage(null)} />
       )}
 
       {/* Image confirmation sheet */}
@@ -783,29 +942,41 @@ export default function MobileChatUI() {
 
           {/* outgoing */}
           <div className="flex flex-col items-end gap-1 msg-enter" style={{ animationDelay: '0.05s' }}>
-            <StackedImages onOpen={(images, index) => setLightbox({ images, index })} />
+            <StackedImages
+              onOpen={(images, index) => setLightbox({ images, index })}
+              onHold={() => setHeldMessage({ type: 'images', isOutgoing: true })}
+            />
             <Ts time="12:28" />
           </div>
 
           {/* incoming */}
           <div className="msg-enter" style={{ animationDelay: '0.15s' }}>
-            <IncomingCluster1 time="12:29" />
+            <IncomingCluster1
+              time="12:29"
+              onHold={(text) => setHeldMessage({ type: 'text', text, isOutgoing: false })}
+            />
           </div>
 
           {/* outgoing */}
           <div className="flex flex-col items-end gap-1 msg-enter" style={{ animationDelay: '0.25s' }}>
-            <OutBubble>Yeah! I've been playing around with it lately, it's actually super fun to use</OutBubble>
+            <OutBubble onHold={() => setHeldMessage({ type: 'text', text: "Yeah! I've been playing around with it lately, it's actually super fun to use", isOutgoing: true })}>
+              Yeah! I've been playing around with it lately, it's actually super fun to use
+            </OutBubble>
             <Ts time="12:29" />
           </div>
 
           {/* incoming */}
           <div className="msg-enter" style={{ animationDelay: '0.35s' }}>
-            <IncomingCluster2 onOpen={(images, index) => setLightbox({ images, index })} time="12:31" />
+            <IncomingCluster2
+              onOpen={(images, index) => setLightbox({ images, index })}
+              time="12:31"
+              onHold={(text) => setHeldMessage({ type: 'text', text, isOutgoing: false })}
+            />
           </div>
 
           {/* outgoing voice */}
           <div className="flex flex-col items-end gap-1 msg-enter" style={{ animationDelay: '0.45s' }}>
-            <VoiceMessage />
+            <VoiceMessage onHold={() => setHeldMessage({ type: 'voice', duration: 20, isOutgoing: true })} />
             <Ts time="12:31" />
           </div>
 
@@ -816,21 +987,30 @@ export default function MobileChatUI() {
           {/* sent messages — small gap between consecutive same-sender messages */}
           {sentMessages.length > 0 && (
             <div className="flex flex-col gap-2">
-              {sentMessages.map((msg, i) => (
-                <div key={i} className="flex flex-col items-end gap-1 msg-enter">
-                  {msg.type === 'voice' ? (
-                    <SentVoiceBubble duration={msg.duration} />
-                  ) : msg.type === 'images' ? (
-                    <SentImageMessage
-                      images={msg.urls}
-                      onOpen={(imgs, idx) => setLightbox({ images: imgs, index: idx })}
-                    />
-                  ) : (
-                    <OutBubble>{msg.text}</OutBubble>
-                  )}
-                  <Ts time={msg.time} />
-                </div>
-              ))}
+              {sentMessages.map((msg, i) => {
+                const isLastInMinute = i === sentMessages.length - 1 || sentMessages[i + 1].time !== msg.time
+                return (
+                  <div key={i} className="flex flex-col items-end gap-1 msg-enter">
+                    {msg.type === 'voice' ? (
+                      <SentVoiceBubble
+                        duration={msg.duration}
+                        onHold={() => setHeldMessage({ type: 'voice', duration: msg.duration, isOutgoing: true })}
+                      />
+                    ) : msg.type === 'images' ? (
+                      <SentImageMessage
+                        images={msg.urls}
+                        onOpen={(imgs, idx) => setLightbox({ images: imgs, index: idx })}
+                        onHold={() => setHeldMessage({ type: 'images', isOutgoing: true })}
+                      />
+                    ) : (
+                      <OutBubble onHold={() => setHeldMessage({ type: 'text', text: msg.text, isOutgoing: true })}>
+                        {msg.text}
+                      </OutBubble>
+                    )}
+                    {isLastInMinute && <Ts time={msg.time} />}
+                  </div>
+                )
+              })}
             </div>
           )}
 

@@ -219,3 +219,14 @@
 .speed-btn-enter {
   animation: speed-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
+
+/* ── Message context sheet ───────────────────────────────────── */
+
+@keyframes context-sheet-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.context-sheet-enter {
+  animation: context-sheet-up 0.38s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
