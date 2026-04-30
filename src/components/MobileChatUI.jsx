@@ -135,37 +135,7 @@ function IconNavigate() {
 // ─── Status Bar ──────────────────────────────────────────────────────────────
 
 function StatusBar() {
-  return (
-    <div className="h-16 w-full flex items-end px-3 pb-1">
-      {/* Time */}
-      <div className="flex-1 flex items-center pl-1">
-        <span className="text-white text-[17px] font-semibold tracking-[-0.32px] leading-none">9:41</span>
-      </div>
-      {/* Dynamic Island */}
-      <div className="flex-shrink-0 flex items-center justify-center">
-        <div className="bg-black w-[120px] h-[34px] rounded-full" />
-      </div>
-      {/* Status icons */}
-      <div className="flex-1 flex items-center justify-end gap-[6px] pr-1">
-        <svg width="17" height="12" viewBox="0 0 17 12" fill="none">
-          <rect x="0" y="8" width="3" height="4" rx="0.8" fill="white"/>
-          <rect x="4.5" y="5.5" width="3" height="6.5" rx="0.8" fill="white"/>
-          <rect x="9" y="3" width="3" height="9" rx="0.8" fill="white"/>
-          <rect x="13.5" y="0" width="3" height="12" rx="0.8" fill="white"/>
-        </svg>
-        <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
-          <path d="M8 3C10.2 3 12.2 3.9 13.6 5.4L15 4C13.2 2.1 10.7 1 8 1C5.3 1 2.8 2.1 1 4L2.4 5.4C3.8 3.9 5.8 3 8 3Z" fill="white"/>
-          <path d="M8 6C9.5 6 10.8 6.6 11.8 7.6L13.2 6.2C11.8 4.8 9.9 4 8 4C6.1 4 4.2 4.8 2.8 6.2L4.2 7.6C5.2 6.6 6.5 6 8 6Z" fill="white"/>
-          <circle cx="8" cy="11" r="1.5" fill="white"/>
-        </svg>
-        <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
-          <rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="white" strokeOpacity="0.35"/>
-          <rect x="2" y="2" width="16" height="8" rx="2" fill="white"/>
-          <path d="M23 4.5v3a1.5 1.5 0 000-3z" fill="white" fillOpacity="0.4"/>
-        </svg>
-      </div>
-    </div>
-  )
+  return <img src="/img/statusbar.svg" alt="" className="w-full" draggable={false} />
 }
 
 // ─── Chat Header ─────────────────────────────────────────────────────────────
