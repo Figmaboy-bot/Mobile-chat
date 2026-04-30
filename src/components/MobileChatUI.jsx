@@ -374,7 +374,7 @@ function VoiceBubble({ duration }) {
       {isPlaying && (
         <button
           onClick={handleCycleSpeed}
-          className="bg-[#f1f1f1] rounded-[16px] px-3 py-1.5 flex-shrink-0"
+          className="bg-[#f1f1f1] rounded-[16px] px-3 py-1.5 flex-shrink-0 speed-btn-enter"
         >
           <span className="text-[rgba(6,8,11,0.6)] text-base font-medium tracking-[-0.7px]">{speedLabel}</span>
         </button>
@@ -513,7 +513,7 @@ function InputBar({ value, onChange, onSend, isRecording, isPaused, onToggleReco
           <div className="flex flex-col gap-5">
 
             {/* Waveform pill */}
-            <div className="bg-[#1f2937] rounded-full px-5 h-14 flex items-center gap-3">
+            <div className="bg-[#1f2937] rounded-full px-5 h-14 flex items-center gap-3 rec-enter">
               {isPaused && (
                 <button
                   onClick={onPauseResume}
@@ -541,7 +541,7 @@ function InputBar({ value, onChange, onSend, isRecording, isPaused, onToggleReco
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between rec-enter" style={{ animationDelay: '0.06s' }}>
               {/* Delete */}
               <button
                 onClick={onDeleteRecording}
@@ -590,7 +590,7 @@ function InputBar({ value, onChange, onSend, isRecording, isPaused, onToggleReco
               {hasText ? (
                 <button
                   onClick={onSend}
-                  className="bg-white rounded-full p-4 flex items-center justify-center"
+                  className="bg-white rounded-full p-4 flex items-center justify-center btn-appear"
                 >
                   <IconSend />
                 </button>
@@ -598,13 +598,14 @@ function InputBar({ value, onChange, onSend, isRecording, isPaused, onToggleReco
                 <>
                   <button
                     onClick={onToggleRecording}
-                    className="bg-[#1f2937] rounded-full p-4 flex items-center justify-center"
+                    className="bg-[#1f2937] rounded-full p-4 flex items-center justify-center btn-appear"
                   >
                     <IconMic />
                   </button>
                   <button
                     onClick={onImagePick}
-                    className="bg-[#1f2937] rounded-full p-4 flex items-center justify-center"
+                    className="bg-[#1f2937] rounded-full p-4 flex items-center justify-center btn-appear"
+                    style={{ animationDelay: '0.05s' }}
                   >
                     <IconImage />
                   </button>
@@ -733,32 +734,38 @@ export default function MobileChatUI() {
 
       {/* Image confirmation sheet */}
       {pendingImages && (
-        <div className="absolute inset-0 z-40 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/60" onClick={handleCancelImages} />
-          <div className="relative bg-[#0f1318] rounded-t-[32px] px-6 pt-6 pb-10 flex flex-col gap-5">
-            <div className="flex items-center justify-between">
-              <span className="text-white font-semibold text-base tracking-[-0.5px]">
-                {pendingImages.length} photo{pendingImages.length > 1 ? 's' : ''} selected
-              </span>
-              <button onClick={handleCancelImages} className="text-white/50 text-sm font-medium">Cancel</button>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hidden">
-              {pendingImages.map((url, i) => (
-                <div key={i} className="relative flex-shrink-0">
-                  <div className="w-24 h-24 rounded-[14px] overflow-hidden">
-                    <img src={url} alt="" className="w-full h-full object-cover" />
-                  </div>
-                  <button
-                    onClick={() => handleRemoveImage(i)}
-                    className="absolute -top-2 -right-2 w-[22px] h-[22px] bg-white rounded-full flex items-center justify-center shadow-md"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M1 1l8 8M9 1L1 9" stroke="#06080b" strokeWidth="1.6" strokeLinecap="round"/>
-                    </svg>
-                  </button>
+        <div className="absolute bottom-0 left-0 right-0 z-40 photo-panel bg-[#06080b] border-t border-white/[0.08] rounded-t-[32px] pt-6 pb-10 flex flex-col gap-5">
+          <div className="flex items-center justify-between px-6">
+            <span className="text-white font-semibold text-[17px] tracking-[-0.5px]">
+              {pendingImages.length} photo{pendingImages.length !== 1 ? 's' : ''} selected
+            </span>
+            <button onClick={handleCancelImages} className="text-white text-sm font-semibold tracking-[-0.3px]">
+              Cancel
+            </button>
+          </div>
+
+          <div
+            className="flex gap-[10px] overflow-x-auto px-6 scrollbar-hidden"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            {pendingImages.map((url, i) => (
+              <div key={i} className="relative flex-shrink-0">
+                <div className="w-[90px] h-[118px] rounded-[18px] overflow-hidden">
+                  <img src={url} alt="" className="w-full h-full object-cover" draggable={false} />
                 </div>
-              ))}
-            </div>
+                <button
+                  onClick={() => handleRemoveImage(i)}
+                  className="absolute top-[7px] right-[7px] w-[22px] h-[22px] bg-white rounded-full flex items-center justify-center"
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M1 1l8 8M9 1L1 9" stroke="#06080b" strokeWidth="1.8" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="px-6">
             <button
               onClick={handleConfirmImages}
               className="w-full bg-white text-[#06080b] font-semibold text-base rounded-full py-4 tracking-[-0.5px]"
@@ -775,36 +782,42 @@ export default function MobileChatUI() {
         <div className="flex flex-col gap-6 px-6 py-4">
 
           {/* outgoing */}
-          <div className="flex flex-col items-end gap-1">
+          <div className="flex flex-col items-end gap-1 msg-enter" style={{ animationDelay: '0.05s' }}>
             <StackedImages onOpen={(images, index) => setLightbox({ images, index })} />
             <Ts time="12:28" />
           </div>
 
           {/* incoming */}
-          <IncomingCluster1 time="12:29" />
+          <div className="msg-enter" style={{ animationDelay: '0.15s' }}>
+            <IncomingCluster1 time="12:29" />
+          </div>
 
           {/* outgoing */}
-          <div className="flex flex-col items-end gap-1">
+          <div className="flex flex-col items-end gap-1 msg-enter" style={{ animationDelay: '0.25s' }}>
             <OutBubble>Yeah! I've been playing around with it lately, it's actually super fun to use</OutBubble>
             <Ts time="12:29" />
           </div>
 
           {/* incoming */}
-          <IncomingCluster2 onOpen={(images, index) => setLightbox({ images, index })} time="12:31" />
+          <div className="msg-enter" style={{ animationDelay: '0.35s' }}>
+            <IncomingCluster2 onOpen={(images, index) => setLightbox({ images, index })} time="12:31" />
+          </div>
 
           {/* outgoing voice */}
-          <div className="flex flex-col items-end gap-1">
+          <div className="flex flex-col items-end gap-1 msg-enter" style={{ animationDelay: '0.45s' }}>
             <VoiceMessage />
             <Ts time="12:31" />
           </div>
 
-          <TypingIndicator />
+          <div className="msg-enter" style={{ animationDelay: '0.55s' }}>
+            <TypingIndicator />
+          </div>
 
           {/* sent messages — small gap between consecutive same-sender messages */}
           {sentMessages.length > 0 && (
             <div className="flex flex-col gap-2">
               {sentMessages.map((msg, i) => (
-                <div key={i} className="flex flex-col items-end gap-1">
+                <div key={i} className="flex flex-col items-end gap-1 msg-enter">
                   {msg.type === 'voice' ? (
                     <SentVoiceBubble duration={msg.duration} />
                   ) : msg.type === 'images' ? (
