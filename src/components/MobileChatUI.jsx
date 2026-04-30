@@ -207,9 +207,20 @@ function ChatHeader() {
   )
 }
 
+// ─── Reply block (inside a bubble) ───────────────────────────────────────────
+
+function ReplyBlock({ senderName, text }) {
+  return (
+    <div className="bg-[#1f2937] rounded-[8px] px-3 py-2 mb-2 w-full">
+      <p className="text-white/60 text-[12px] leading-4 font-medium tracking-[-0.5px]">{senderName}</p>
+      <p className="text-white text-[12px] leading-4 font-medium tracking-[-0.5px] line-clamp-1">{text}</p>
+    </div>
+  )
+}
+
 // ─── Message Bubbles ─────────────────────────────────────────────────────────
 
-function OutBubble({ children, onHold, reaction }) {
+function OutBubble({ children, onHold, reaction, onRemoveReaction, replyTo }) {
   const timer = useRef(null)
   const startPress = () => { timer.current = setTimeout(() => onHold?.(), 420) }
   const cancelPress = () => clearTimeout(timer.current)
@@ -220,21 +231,22 @@ function OutBubble({ children, onHold, reaction }) {
         onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
         onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
       >
+        {replyTo && <ReplyBlock senderName={replyTo.senderName} text={replyTo.text} />}
         <p className="text-[#06080b] text-base font-medium leading-5 tracking-[-0.7px]">
           {children}
         </p>
       </div>
-      {reaction && <ReactionBadge emoji={reaction} light />}
+      {reaction && <ReactionBadge emoji={reaction} outgoing onRemove={onRemoveReaction} />}
     </div>
   )
 }
 
-function InBubble({ children, onHold, reaction }) {
+function InBubble({ children, onHold, reaction, onRemoveReaction }) {
   const timer = useRef(null)
   const startPress = () => { timer.current = setTimeout(() => onHold?.(), 420) }
   const cancelPress = () => clearTimeout(timer.current)
   return (
-    <div className="relative flex-shrink-0">
+    <div className="relative flex-shrink-0 self-start">
       <div
         className="chat-bubble bg-[#1f2937] rounded-[16px] px-3 py-2 select-none"
         onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
@@ -244,7 +256,7 @@ function InBubble({ children, onHold, reaction }) {
           {children}
         </p>
       </div>
-      {reaction && <ReactionBadge emoji={reaction} />}
+      {reaction && <ReactionBadge emoji={reaction} onRemove={onRemoveReaction} />}
     </div>
   )
 }
@@ -257,9 +269,16 @@ function UserAvatar() {
   )
 }
 
-function ReactionBadge({ emoji, light }) {
+function ReactionBadge({ emoji, outgoing, onRemove }) {
   return (
-    <div className={`absolute -bottom-[10px] -right-[6px] w-9 h-9 rounded-full flex items-center justify-center text-lg z-10 border-[3px] border-[#06080b] ${light ? 'bg-[#e2e2e2]' : 'bg-[#2a3a4a]'}`}>
+    <div
+      className={`absolute -bottom-[8px] w-7 h-7 rounded-full flex items-center justify-center text-sm z-10 border-2 cursor-pointer active:scale-90 transition-transform select-none ${
+        outgoing
+          ? '-left-[8px] bg-white border-[#f1f1f1]'
+          : '-right-[8px] bg-[#2a3a4a] border-[#1f2937]'
+      }`}
+      onClick={(e) => { e.stopPropagation(); onRemove?.() }}
+    >
       {emoji}
     </div>
   )
@@ -267,7 +286,7 @@ function ReactionBadge({ emoji, light }) {
 
 // ─── Specific Messages ───────────────────────────────────────────────────────
 
-function StackedImages({ onOpen, onHold }) {
+function StackedImages({ onOpen, onHold, reaction, onRemoveReaction }) {
   const timer = useRef(null)
   const startPress = () => { timer.current = setTimeout(() => onHold?.(), 420) }
   const cancelPress = () => clearTimeout(timer.current)
@@ -284,48 +303,67 @@ function StackedImages({ onOpen, onHold }) {
         <div className="chat-img-front cursor-pointer" onClick={() => onOpen([LANDSCAPE1, LANDSCAPE2], 1)}>
           <img src={LANDSCAPE2} alt="" className="w-full h-full object-cover" />
         </div>
+        {reaction && <ReactionBadge emoji={reaction} outgoing onRemove={onRemoveReaction} />}
       </div>
       <OutBubble>Check this out  🔥🔥</OutBubble>
     </div>
   )
 }
 
-function IncomingCluster1({ time, onHold, reactions = {} }) {
+function IncomingCluster1({ time, onHold, reactions = {}, onRemoveReaction, hiddenIds = new Set() }) {
+  const show1a = !hiddenIds.has('si-1a')
+  const show1b = !hiddenIds.has('si-1b')
+  if (!show1a && !show1b) return null
   return (
     <div className="flex items-end gap-2.5">
       <UserAvatar />
       <div className="flex flex-col gap-1.5">
-        <InBubble
-          onHold={() => onHold?.({ text: 'Oh wow 😄', msgId: 'si-1a' })}
-          reaction={reactions['si-1a']}
-        >Oh wow 😄</InBubble>
-        <InBubble
-          onHold={() => onHold?.({ text: 'Those pictures are so beautiful! Are you using AI tools for these too?', msgId: 'si-1b' })}
-          reaction={reactions['si-1b']}
-        >
-          Those pictures are so beautiful! Are you using AI tools for these too?
-        </InBubble>
+        {show1a && (
+          <InBubble
+            onHold={() => onHold?.({ text: 'Oh wow 😄', msgId: 'si-1a' })}
+            reaction={reactions['si-1a']}
+            onRemoveReaction={() => onRemoveReaction?.('si-1a')}
+          >Oh wow 😄</InBubble>
+        )}
+        {show1b && (
+          <InBubble
+            onHold={() => onHold?.({ text: 'Those pictures are so beautiful! Are you using AI tools for these too?', msgId: 'si-1b' })}
+            reaction={reactions['si-1b']}
+            onRemoveReaction={() => onRemoveReaction?.('si-1b')}
+          >
+            Those pictures are so beautiful! Are you using AI tools for these too?
+          </InBubble>
+        )}
         {time && <Ts time={time} align="left" />}
       </div>
     </div>
   )
 }
 
-function IncomingCluster2({ onOpen, time, onHold, reactions = {} }) {
+function IncomingCluster2({ onOpen, time, onHold, reactions = {}, onRemoveReaction, hiddenIds = new Set() }) {
+  const show2a = !hiddenIds.has('si-2a')
+  const show2b = !hiddenIds.has('si-2b')
+  if (!show2a && !show2b) return null
   return (
     <div className="flex items-end gap-2.5">
       <UserAvatar />
       <div className="flex flex-col gap-1.5">
-        <InBubble
-          onHold={() => onHold?.({ text: "Wait I'll show you something", msgId: 'si-2a' })}
-          reaction={reactions['si-2a']}
-        >Wait I'll show you something</InBubble>
-        <InBubble
-          onHold={() => onHold?.({ text: "I generated this yesterday when I couldn't sleep 😅", msgId: 'si-2b' })}
-          reaction={reactions['si-2b']}
-        >
-          I generated this yesterday when I couldn't sleep 😅
-        </InBubble>
+        {show2a && (
+          <InBubble
+            onHold={() => onHold?.({ text: "Wait I'll show you something", msgId: 'si-2a' })}
+            reaction={reactions['si-2a']}
+            onRemoveReaction={() => onRemoveReaction?.('si-2a')}
+          >Wait I'll show you something</InBubble>
+        )}
+        {show2b && (
+          <InBubble
+            onHold={() => onHold?.({ text: "I generated this yesterday when I couldn't sleep 😅", msgId: 'si-2b' })}
+            reaction={reactions['si-2b']}
+            onRemoveReaction={() => onRemoveReaction?.('si-2b')}
+          >
+            I generated this yesterday when I couldn't sleep 😅
+          </InBubble>
+        )}
         <div
           className="w-[164px] h-[200px] rounded-[20px] overflow-hidden cursor-pointer"
           onClick={() => onOpen([LANDSCAPE3], 0)}
@@ -338,8 +376,8 @@ function IncomingCluster2({ onOpen, time, onHold, reactions = {} }) {
   )
 }
 
-function VoiceMessage({ onHold }) {
-  return <VoiceBubble duration={20} onHold={onHold} />
+function VoiceMessage({ onHold, reaction, onRemoveReaction }) {
+  return <VoiceBubble duration={20} onHold={onHold} reaction={reaction} onRemoveReaction={onRemoveReaction} />
 }
 
 function TypingIndicator() {
@@ -391,7 +429,7 @@ function Ts({ time, align = 'right' }) {
 
 const SPEED_STEPS = [1, 1.5, 2]
 
-function VoiceBubble({ duration, onHold }) {
+function VoiceBubble({ duration, onHold, reaction, onRemoveReaction }) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [playbackTime, setPlaybackTime] = useState(0)
   const [speedIdx, setSpeedIdx] = useState(0)
@@ -427,8 +465,9 @@ function VoiceBubble({ duration, onHold }) {
 
   return (
     <div className="flex items-center justify-end gap-2">
+      <div className="relative flex-shrink-0">
       <div
-        className="bg-[#f1f1f1] rounded-[16px] px-3 py-2 flex items-center gap-2 flex-shrink-0 select-none"
+        className="bg-[#f1f1f1] rounded-[16px] px-3 py-2 flex items-center gap-2 select-none"
         onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
         onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
       >
@@ -460,6 +499,8 @@ function VoiceBubble({ duration, onHold }) {
           {isPlaying ? formatTime(remaining) : formatTime(duration)}
         </span>
       </div>
+      {reaction && <ReactionBadge emoji={reaction} outgoing onRemove={onRemoveReaction} />}
+      </div>
       {isPlaying && (
         <button
           onClick={handleCycleSpeed}
@@ -472,8 +513,8 @@ function VoiceBubble({ duration, onHold }) {
   )
 }
 
-function SentVoiceBubble({ duration, onHold }) {
-  return <VoiceBubble duration={duration} onHold={onHold} />
+function SentVoiceBubble({ duration, onHold, reaction, onRemoveReaction }) {
+  return <VoiceBubble duration={duration} onHold={onHold} reaction={reaction} onRemoveReaction={onRemoveReaction} />
 }
 
 // ─── Sent image message ───────────────────────────────────────────────────────
@@ -481,7 +522,7 @@ function SentVoiceBubble({ duration, onHold }) {
 const SPREAD_TOTAL_W = 340
 const SPREAD_GAP     = 8
 
-function SentImageMessage({ images, onOpen, onHold }) {
+function SentImageMessage({ images, onOpen, onHold, reaction, onRemoveReaction }) {
   const [hovered, setHovered] = useState(false)
   const pressTimer = useRef(null)
   const startPress = () => { pressTimer.current = setTimeout(() => onHold?.(), 420) }
@@ -490,35 +531,45 @@ function SentImageMessage({ images, onOpen, onHold }) {
 
   if (n === 1) {
     return (
-      <div
-        className="w-[164px] h-[200px] rounded-[20px] overflow-hidden cursor-pointer flex-shrink-0 select-none"
-        onClick={() => onOpen(images, 0)}
-        onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
-        onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
-      >
-        <img src={images[0]} alt="" className="w-full h-full object-cover" />
+      <div className="relative flex-shrink-0">
+        <div
+          className="w-[164px] h-[200px] rounded-[20px] overflow-hidden cursor-pointer select-none"
+          onClick={() => onOpen(images, 0)}
+          onMouseDown={startPress} onMouseUp={cancelPress} onMouseLeave={cancelPress}
+          onTouchStart={startPress} onTouchEnd={cancelPress} onTouchMove={cancelPress}
+        >
+          <img src={images[0]} alt="" className="w-full h-full object-cover" />
+        </div>
+        {reaction && <ReactionBadge emoji={reaction} outgoing onRemove={onRemoveReaction} />}
       </div>
     )
   }
 
-  // ── Spread (hover) geometry ──
-  const sImgW = Math.floor((SPREAD_TOTAL_W - (n - 1) * SPREAD_GAP) / n)
+  // Always render at most 3 cards; extras are shown via badge
+  const renderCount = Math.min(n, 3)
+  const shown       = images.slice(0, renderCount)
+  const extras      = Math.max(0, n - 3)
+
+  // ── Spread (hover) geometry — 3 images max ──
+  const sImgW = Math.floor((SPREAD_TOTAL_W - (renderCount - 1) * SPREAD_GAP) / renderCount)
   const sImgH = Math.round(sImgW * 200 / 164)
-  const sW    = sImgW * n + SPREAD_GAP * (n - 1)
+  const sW    = sImgW * renderCount + SPREAD_GAP * (renderCount - 1)
   const sH    = sImgH + 20
 
   // ── Stack (default) geometry ──
   const stackW = 260
   const stackH = 240
 
-  // Position per image in stacked state
   const stackPos = (i) => {
-    if (i === 0)            return { transform: 'rotate(-17.5deg)', top: 20, left: 12,  width: 164, height: 200 }
-    if (i === 1 && n >= 3)  return { transform: 'rotate(-8deg)',    top: 16, left: 48,  width: 164, height: 200 }
-    return                         { transform: 'rotate(0deg)',     top: 20, left: 96,  width: 164, height: 200 }
+    if (renderCount === 2) {
+      if (i === 0) return { transform: 'rotate(-17.5deg)', top: 20, left: 12,  width: 164, height: 200 }
+      return               { transform: 'rotate(0deg)',    top: 20, left: 96,  width: 164, height: 200 }
+    }
+    if (i === 0) return { transform: 'rotate(-17.5deg)', top: 20, left: 12,  width: 164, height: 200 }
+    if (i === 1) return { transform: 'rotate(-8deg)',    top: 16, left: 48,  width: 164, height: 200 }
+    return               { transform: 'rotate(0deg)',    top: 20, left: 96,  width: 164, height: 200 }
   }
 
-  // Position per image in spread state
   const spreadPos = (i) => ({
     transform: 'rotate(0deg)',
     top:   10,
@@ -527,16 +578,13 @@ function SentImageMessage({ images, onOpen, onHold }) {
     height: sImgH,
   })
 
-  // Z-index in stacked state
   const stackZ = (i) => {
     if (i === 0) return 1
-    if (i === 1 && n >= 3) return 2
-    if (i === (n <= 2 ? 1 : 2)) return 3   // visible front card
-    return 2                                 // extras hidden behind front
+    if (i === 1 && renderCount === 3) return 2
+    return 3
   }
 
-  const frontIdx = n <= 2 ? 1 : 2
-  const extras   = n - 3  // cards hidden behind the front in stack view
+  const frontIdx = renderCount - 1
 
   return (
     <div
@@ -554,7 +602,7 @@ function SentImageMessage({ images, onOpen, onHold }) {
       onTouchEnd={cancelPress}
       onTouchMove={cancelPress}
     >
-      {images.map((url, i) => (
+      {shown.map((url, i) => (
         <div
           key={i}
           className="absolute rounded-[20px] overflow-hidden cursor-pointer"
@@ -566,14 +614,14 @@ function SentImageMessage({ images, onOpen, onHold }) {
           onClick={() => onOpen(images, i)}
         >
           <img src={url} alt="" className="w-full h-full object-cover" />
-          {/* "+N" badge on front card when extras are hidden in stack */}
-          {!hovered && i === frontIdx && extras > 0 && (
+          {i === frontIdx && extras > 0 && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
               <span className="text-white font-semibold text-2xl">+{extras}</span>
             </div>
           )}
         </div>
       ))}
+      {reaction && <ReactionBadge emoji={reaction} outgoing onRemove={onRemoveReaction} />}
     </div>
   )
 }
@@ -582,9 +630,20 @@ function SentImageMessage({ images, onOpen, onHold }) {
 
 const REACTIONS = ['🔥', '😭', '🙈', '❤️', '😄', '🙏', '💪']
 
-function MessageContextMenu({ message, onClose, onReact }) {
+function MessageContextMenu({ message, onClose, onReact, onReply, onDelete }) {
   const handleCopy = () => {
     if (message.text) navigator.clipboard?.writeText(message.text)
+    onClose()
+  }
+
+  const handleReply = () => {
+    const text = message.type === 'voice'
+      ? '🎤 Voice message'
+      : message.type === 'images'
+        ? '📷 Photo'
+        : message.text
+    const senderName = message.isOutgoing ? 'You' : 'Sulaimon Odeniran'
+    onReply?.({ text, senderName })
     onClose()
   }
 
@@ -626,7 +685,7 @@ function MessageContextMenu({ message, onClose, onReact }) {
               <button
                 key={emoji}
                 className="text-[28px] flex-shrink-0 transition-transform active:scale-125"
-                onClick={() => onReact(emoji)}
+                onClick={() => onReact(emoji, message.msgId)}
               >
                 {emoji}
               </button>
@@ -640,7 +699,7 @@ function MessageContextMenu({ message, onClose, onReact }) {
             <span className="text-white text-sm font-medium tracking-[-0.7px]">Copy</span>
             <IconCopy />
           </button>
-          <button onClick={onClose} className="flex items-center justify-between py-3 border-b border-white/[0.06]">
+          <button onClick={handleReply} className="flex items-center justify-between py-3 border-b border-white/[0.06]">
             <span className="text-white text-sm font-medium tracking-[-0.7px]">Reply</span>
             <IconReply />
           </button>
@@ -648,7 +707,7 @@ function MessageContextMenu({ message, onClose, onReact }) {
             <span className="text-white text-sm font-medium tracking-[-0.7px]">Forward</span>
             <IconForward />
           </button>
-          <button onClick={onClose} className="flex items-center justify-between py-3">
+          <button onClick={() => { onDelete?.(); onClose() }} className="flex items-center justify-between py-3">
             <span className="text-[#fb5c55] text-sm font-medium tracking-[-0.7px]">Delete</span>
             <IconDeleteAction />
           </button>
@@ -661,7 +720,60 @@ function MessageContextMenu({ message, onClose, onReact }) {
 
 // ─── Input Bar ───────────────────────────────────────────────────────────────
 
-function InputBar({ value, onChange, onSend, isRecording, isPaused, onToggleRecording, onPauseResume, onDeleteRecording, recordingTime, onImagePick }) {
+// ─── Delete confirmation bottom sheet ────────────────────────────────────────
+
+function DeleteModal({ onConfirm, onCancel }) {
+  return (
+    <>
+      <div className="absolute inset-0 z-50 backdrop-blur-[3px] bg-[rgba(251,251,251,0.08)]" onClick={onCancel} />
+      <div className="absolute bottom-6 left-6 right-6 z-50 bg-[#06080b] rounded-[32px] px-5 pt-4 pb-6 flex flex-col gap-5 context-sheet-enter">
+        <div className="flex justify-center pt-1">
+          <div className="w-10 h-[6px] bg-white/20 rounded-full" />
+        </div>
+        <div className="flex flex-col items-center gap-1.5">
+          <p className="text-white font-semibold text-[17px] tracking-[-0.5px]">Delete message?</p>
+          <p className="text-white/40 text-sm font-medium tracking-[-0.4px] text-center">This message will be removed from the conversation.</p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={onConfirm}
+            className="w-full py-4 bg-[rgba(251,92,85,0.12)] rounded-[20px] text-[#fb5c55] font-semibold text-base tracking-[-0.5px]"
+          >
+            Delete
+          </button>
+          <button
+            onClick={onCancel}
+            className="w-full py-4 bg-[#1f2937] rounded-[20px] text-white font-medium text-base tracking-[-0.5px]"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Undo toast ───────────────────────────────────────────────────────────────
+
+function UndoToast({ onUndo }) {
+  return (
+    <div className="absolute bottom-[130px] left-0 right-0 z-40 flex justify-center px-6 pointer-events-none">
+      <div className="backdrop-blur-[10px] bg-[rgba(255,255,255,0.1)] rounded-full pl-3 pr-1 py-1 flex items-center gap-8 msg-enter pointer-events-auto">
+        <span className="text-white text-[12px] font-medium leading-4 tracking-[-0.044rem] whitespace-nowrap">Message deleted</span>
+        <button
+          onClick={onUndo}
+          className="bg-[rgba(78,216,130,0.2)] active:bg-[rgba(78,216,130,0.3)] transition-colors px-3 py-2 rounded-full flex-shrink-0"
+        >
+          <span className="text-[#4ED882] text-[14px] font-medium leading-[18px] tracking-[-0.044rem]">Undo</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Input Bar ───────────────────────────────────────────────────────────────
+
+function InputBar({ value, onChange, onSend, isRecording, isPaused, isPlayingBack, onToggleRecording, onPauseResume, onPlayback, onDeleteRecording, recordingTime, onImagePick, replyTo, onCancelReply }) {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -686,6 +798,22 @@ function InputBar({ value, onChange, onSend, isRecording, isPaused, onToggleReco
 
   return (
     <div className="absolute bottom-0 left-0 right-0 z-20 backdrop-blur-xl bg-[rgba(6,8,11,0.4)] border-t border-white/10 pt-6 flex flex-col items-center gap-4 rounded-tl-[32px] rounded-tr-[32px]">
+      {replyTo && !isRecording && (
+        <div className="w-full px-6 -mb-1 flex items-center gap-3">
+          <div className="flex-1 bg-[#1f2937] rounded-[12px] px-3 py-2 border-l-2 border-white/30 min-w-0">
+            <p className="text-white/60 text-[11px] font-medium leading-4 tracking-[-0.4px]">{replyTo.senderName}</p>
+            <p className="text-white text-[12px] font-medium leading-4 tracking-[-0.4px] truncate">{replyTo.text}</p>
+          </div>
+          <button
+            onClick={onCancelReply}
+            className="text-white/40 flex-shrink-0 active:text-white transition-colors"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+      )}
       <div className="w-full px-6">
 
         {isRecording ? (
@@ -696,12 +824,19 @@ function InputBar({ value, onChange, onSend, isRecording, isPaused, onToggleReco
             <div className="bg-[#1f2937] rounded-full px-5 h-14 flex items-center gap-3 rec-enter">
               {isPaused && (
                 <button
-                  onClick={onPauseResume}
-                  className="flex-shrink-0 flex items-center justify-center w-3"
+                  onClick={onPlayback}
+                  className="flex-shrink-0 flex items-center justify-center w-4"
                 >
-                  <svg width="10" height="13" viewBox="0 0 10 13" fill="none">
-                    <path d="M1 1.5l8 5-8 5v-10z" fill="white"/>
-                  </svg>
+                  {isPlayingBack ? (
+                    <div className="flex gap-[3px]">
+                      <div className="w-[3px] h-[13px] bg-white rounded-full" />
+                      <div className="w-[3px] h-[13px] bg-white rounded-full" />
+                    </div>
+                  ) : (
+                    <svg width="10" height="13" viewBox="0 0 10 13" fill="none">
+                      <path d="M1 1.5l8 5-8 5v-10z" fill="white"/>
+                    </svg>
+                  )}
                 </button>
               )}
               <div className="flex-1 flex items-center gap-[2.4px] min-w-0">
@@ -805,71 +940,217 @@ function InputBar({ value, onChange, onSend, isRecording, isPaused, onToggleReco
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+const RESPONSES = [
+  ["Hey! 😊", "What's on your mind?"],
+  ["That's really cool! 🔥"],
+  ["Haha, I love that 😂"],
+  ["Really? Tell me more 👀"],
+  ["I was literally just thinking about that 😅"],
+  ["Wow, didn't see that coming 😮"],
+  ["Facts! 💯"],
+  ["You always know what to say 😄"],
+  ["Okay okay, I see you 👌"],
+  ["That actually makes a lot of sense 🤔"],
+]
+
 export default function MobileChatUI() {
-  const scrollRef   = useRef(null)
-  const timerRef    = useRef(null)
-  const fileInputRef = useRef(null)
-  const [inputValue,      setInputValue]      = useState('')
-  const [sentMessages,    setSentMessages]    = useState([])
-  const [isRecording,     setIsRecording]     = useState(false)
-  const [isPaused,        setIsPaused]        = useState(false)
-  const [recordingTime,   setRecordingTime]   = useState(0)
-  const [lightbox,        setLightbox]        = useState(null)
-  const [pendingImages,   setPendingImages]   = useState(null)
-  const [heldMessage,     setHeldMessage]     = useState(null)
-  const [reactions,       setReactions]       = useState({})
+  const scrollRef        = useRef(null)
+  const timerRef         = useRef(null)
+  const fileInputRef     = useRef(null)
+  const undoTimerRef     = useRef(null)
+  const scriptTimers     = useRef([])
+  const responseIndex    = useRef(0)
+  const stripRef         = useRef(null)
+  const stripDrag        = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false })
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef   = useRef([])
+  const streamRef        = useRef(null)
+  const recordingBlobUrl = useRef(null)
+  const audioPlayerRef   = useRef(null)
+  const recordingTimeRef = useRef(0)
+
+  const [inputValue,    setInputValue]    = useState('')
+  const [messages,      setMessages]      = useState([])
+  const [isTyping,      setIsTyping]      = useState(false)
+  const [isRecording,   setIsRecording]   = useState(false)
+  const [isPaused,      setIsPaused]      = useState(false)
+  const [isPlayingBack, setIsPlayingBack] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const [lightbox,      setLightbox]      = useState(null)
+  const [pendingImages, setPendingImages] = useState(null)
+  const [heldMessage,   setHeldMessage]   = useState(null)
+  const [reactions,     setReactions]     = useState({})
+  const [replyTo,       setReplyTo]       = useState(null)
+  const [deleteTarget,  setDeleteTarget]  = useState(null)
+  const [undoData,      setUndoData]      = useState(null)
 
   const scrollToBottom = () => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }
 
   useEffect(() => { scrollToBottom() }, [])
-  useEffect(() => { scrollToBottom() }, [sentMessages])
-  useEffect(() => () => clearInterval(timerRef.current), [])
+  useEffect(() => { scrollToBottom() }, [messages, isTyping])
+  useEffect(() => () => { clearInterval(timerRef.current); clearTimeout(undoTimerRef.current) }, [])
 
-  const handleReact = (emoji) => {
-    if (!heldMessage?.msgId) return
-    setReactions(prev => ({ ...prev, [heldMessage.msgId]: emoji }))
+  const triggerResponse = () => {
+    const idx = responseIndex.current % RESPONSES.length
+    responseIndex.current++
+    const texts = RESPONSES[idx]
+
+    scriptTimers.current.forEach(clearTimeout)
+    scriptTimers.current = []
+    const push = (fn, d) => { scriptTimers.current.push(setTimeout(fn, d)) }
+
+    push(() => setIsTyping(true), 800)
+    push(() => {
+      setIsTyping(false)
+      const time = nowTime()
+      setMessages(prev => [
+        ...prev,
+        ...texts.map((text, i) => ({
+          id: `r-${Date.now()}-${i}`,
+          type: 'text',
+          text,
+          isOutgoing: false,
+          time,
+        })),
+      ])
+    }, 2800)
+  }
+
+  const handleReact = (emoji, msgId) => {
+    if (msgId) setReactions(prev => ({ ...prev, [msgId]: emoji }))
     setHeldMessage(null)
   }
+
+  const removeReaction = (msgId) => setReactions(prev => {
+    const next = { ...prev }
+    delete next[msgId]
+    return next
+  })
 
   const handleSend = () => {
     const text = inputValue.trim()
     if (!text) return
-    setSentMessages(prev => [...prev, { id: `s-${Date.now()}`, type: 'text', text, time: nowTime() }])
+    setMessages(prev => [...prev, {
+      id: `m-${Date.now()}`, type: 'text', text, isOutgoing: true, time: nowTime(), replyTo,
+    }])
     setInputValue('')
+    setReplyTo(null)
+    triggerResponse()
   }
 
-  const handleToggleRecording = () => {
+  const stopPlayback = () => {
+    audioPlayerRef.current?.pause()
+    audioPlayerRef.current = null
+    setIsPlayingBack(false)
+  }
+
+  const handleToggleRecording = async () => {
     if (isRecording) {
+      // ── Stop & send ──
       clearInterval(timerRef.current)
+      stopPlayback()
+      const capturedTime  = recordingTimeRef.current
+      const capturedReply = replyTo
+      const mr = mediaRecorderRef.current
+      if (mr && mr.state !== 'inactive') {
+        mr.onstop = () => {
+          const blob     = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+          const audioUrl = URL.createObjectURL(blob)
+          setMessages(prev => [...prev, {
+            id: `m-${Date.now()}`, type: 'voice', duration: capturedTime,
+            audioUrl, isOutgoing: true, time: nowTime(), replyTo: capturedReply,
+          }])
+          streamRef.current?.getTracks().forEach(t => t.stop())
+          triggerResponse()
+        }
+        mr.stop()
+      } else {
+        setMessages(prev => [...prev, {
+          id: `m-${Date.now()}`, type: 'voice', duration: capturedTime,
+          isOutgoing: true, time: nowTime(), replyTo: capturedReply,
+        }])
+        triggerResponse()
+      }
+      setReplyTo(null)
       setIsRecording(false)
       setIsPaused(false)
-      setSentMessages(prev => [...prev, { id: `s-${Date.now()}`, type: 'voice', duration: recordingTime, time: nowTime() }])
       setRecordingTime(0)
+      recordingTimeRef.current = 0
+      if (recordingBlobUrl.current) { URL.revokeObjectURL(recordingBlobUrl.current); recordingBlobUrl.current = null }
     } else {
+      // ── Start ──
+      audioChunksRef.current = []
+      recordingTimeRef.current = 0
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        streamRef.current = stream
+        const mr = new MediaRecorder(stream)
+        mediaRecorderRef.current = mr
+        mr.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+        mr.start(200)
+      } catch {
+        mediaRecorderRef.current = null
+      }
       setIsRecording(true)
       setIsPaused(false)
       setRecordingTime(0)
-      timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000)
+      timerRef.current = setInterval(() => {
+        setRecordingTime(t => { recordingTimeRef.current = t + 1; return t + 1 })
+      }, 1000)
     }
   }
 
   const handlePauseResume = () => {
     if (isPaused) {
+      stopPlayback()
+      const mr = mediaRecorderRef.current
+      if (mr?.state === 'paused') mr.resume()
       setIsPaused(false)
-      timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000)
+      timerRef.current = setInterval(() => {
+        setRecordingTime(t => { recordingTimeRef.current = t + 1; return t + 1 })
+      }, 1000)
     } else {
       clearInterval(timerRef.current)
+      const mr = mediaRecorderRef.current
+      if (mr?.state === 'recording') mr.pause()
+      // snapshot blob for playback
+      if (audioChunksRef.current.length > 0) {
+        if (recordingBlobUrl.current) URL.revokeObjectURL(recordingBlobUrl.current)
+        recordingBlobUrl.current = URL.createObjectURL(new Blob(audioChunksRef.current, { type: 'audio/webm' }))
+      }
       setIsPaused(true)
+    }
+  }
+
+  const handlePlayback = () => {
+    if (!recordingBlobUrl.current) return
+    if (isPlayingBack) {
+      stopPlayback()
+    } else {
+      const audio = new Audio(recordingBlobUrl.current)
+      audioPlayerRef.current = audio
+      audio.onended = () => setIsPlayingBack(false)
+      audio.play().catch(() => {})
+      setIsPlayingBack(true)
     }
   }
 
   const handleDeleteRecording = () => {
     clearInterval(timerRef.current)
+    stopPlayback()
+    const mr = mediaRecorderRef.current
+    if (mr && mr.state !== 'inactive') {
+      mr.onstop = () => streamRef.current?.getTracks().forEach(t => t.stop())
+      mr.stop()
+    }
+    audioChunksRef.current = []
+    if (recordingBlobUrl.current) { URL.revokeObjectURL(recordingBlobUrl.current); recordingBlobUrl.current = null }
     setIsRecording(false)
     setIsPaused(false)
     setRecordingTime(0)
+    recordingTimeRef.current = 0
   }
 
   const handleImagePick = () => fileInputRef.current?.click()
@@ -882,8 +1163,11 @@ export default function MobileChatUI() {
   }
 
   const handleConfirmImages = () => {
-    setSentMessages(prev => [...prev, { id: `s-${Date.now()}`, type: 'images', urls: pendingImages, time: nowTime() }])
+    setMessages(prev => [...prev, {
+      id: `m-${Date.now()}`, type: 'images', urls: pendingImages, isOutgoing: true, time: nowTime(),
+    }])
     setPendingImages(null)
+    triggerResponse()
   }
 
   const handleCancelImages = () => {
@@ -896,6 +1180,31 @@ export default function MobileChatUI() {
     const updated = pendingImages.filter((_, i) => i !== index)
     if (updated.length === 0) setPendingImages(null)
     else setPendingImages(updated)
+  }
+
+  const onStripMouseDown = (e) => {
+    if (!stripRef.current) return
+    stripDrag.current = { active: true, startX: e.clientX, scrollLeft: stripRef.current.scrollLeft, moved: false }
+  }
+  const onStripMouseMove = (e) => {
+    if (!stripDrag.current.active || !stripRef.current) return
+    const dx = e.clientX - stripDrag.current.startX
+    if (Math.abs(dx) > 4) stripDrag.current.moved = true
+    stripRef.current.scrollLeft = stripDrag.current.scrollLeft - dx
+  }
+  const onStripEnd = () => { stripDrag.current.active = false }
+
+  // Group consecutive same-direction messages so incoming share one avatar
+  const messageGroups = []
+  let gi = 0
+  while (gi < messages.length) {
+    const isOut = messages[gi].isOutgoing
+    const group = []
+    while (gi < messages.length && messages[gi].isOutgoing === isOut) {
+      group.push(messages[gi])
+      gi++
+    }
+    messageGroups.push({ isOutgoing: isOut, messages: group })
   }
 
   return (
@@ -921,7 +1230,50 @@ export default function MobileChatUI() {
       )}
 
       {heldMessage && (
-        <MessageContextMenu message={heldMessage} onClose={() => setHeldMessage(null)} onReact={handleReact} />
+        <MessageContextMenu
+          message={heldMessage}
+          onClose={() => setHeldMessage(null)}
+          onReact={handleReact}
+          onReply={(r) => setReplyTo(r)}
+          onDelete={() => setDeleteTarget(heldMessage)}
+        />
+      )}
+
+      {deleteTarget && (
+        <DeleteModal
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            const msgId = deleteTarget.msgId
+            setDeleteTarget(null)
+            if (!msgId) return
+            const savedReaction = reactions[msgId]
+            clearTimeout(undoTimerRef.current)
+            undoTimerRef.current = setTimeout(() => setUndoData(null), 4000)
+
+            const idx = messages.findIndex(m => m.id === msgId)
+            if (idx !== -1) {
+              const msg = messages[idx]
+              setMessages(prev => prev.filter((_, i) => i !== idx))
+              setReactions(r => { const n = { ...r }; delete n[msgId]; return n })
+              setUndoData({ msg, index: idx, reaction: savedReaction })
+            }
+          }}
+        />
+      )}
+
+      {undoData && (
+        <UndoToast
+          onUndo={() => {
+            clearTimeout(undoTimerRef.current)
+            setMessages(prev => {
+              const next = [...prev]
+              next.splice(undoData.index, 0, undoData.msg)
+              return next
+            })
+            if (undoData.reaction) setReactions(prev => ({ ...prev, [undoData.msg.id]: undoData.reaction }))
+            setUndoData(null)
+          }}
+        />
       )}
 
       {/* Image confirmation sheet */}
@@ -937,16 +1289,21 @@ export default function MobileChatUI() {
           </div>
 
           <div
-            className="flex gap-[10px] overflow-x-auto px-6 scrollbar-hidden"
-            style={{ WebkitOverflowScrolling: 'touch' }}
+            ref={stripRef}
+            className="flex gap-[10px] overflow-x-auto px-6 scrollbar-hidden select-none"
+            style={{ WebkitOverflowScrolling: 'touch', cursor: 'grab' }}
+            onMouseDown={onStripMouseDown}
+            onMouseMove={onStripMouseMove}
+            onMouseUp={onStripEnd}
+            onMouseLeave={onStripEnd}
           >
             {pendingImages.map((url, i) => (
               <div key={i} className="relative flex-shrink-0">
-                <div className="w-[90px] h-[118px] rounded-[18px] overflow-hidden">
+                <div className="w-[90px] h-[118px] rounded-[18px] overflow-hidden pointer-events-none">
                   <img src={url} alt="" className="w-full h-full object-cover" draggable={false} />
                 </div>
                 <button
-                  onClick={() => handleRemoveImage(i)}
+                  onClick={() => { if (!stripDrag.current.moved) handleRemoveImage(i) }}
                   className="absolute top-[7px] right-[7px] w-[22px] h-[22px] bg-white rounded-full flex items-center justify-center"
                 >
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -971,87 +1328,85 @@ export default function MobileChatUI() {
       <ChatHeader />
 
       <div ref={scrollRef} className="absolute inset-0 overflow-y-auto scrollbar-hidden chat-scroll">
-        <div className="flex flex-col gap-6 px-6 py-4">
+        <div className="flex flex-col gap-4 px-6 py-4">
 
-          {/* outgoing */}
-          <div className="flex flex-col items-end gap-1 msg-enter" style={{ animationDelay: '0.05s' }}>
-            <StackedImages
-              onOpen={(images, index) => setLightbox({ images, index })}
-              onHold={() => setHeldMessage({ type: 'images', isOutgoing: true })}
-            />
-            <Ts time="12:28" />
-          </div>
-
-          {/* incoming */}
-          <div className="msg-enter" style={{ animationDelay: '0.15s' }}>
-            <IncomingCluster1
-              time="12:29"
-              onHold={({ text, msgId }) => setHeldMessage({ type: 'text', text, isOutgoing: false, msgId })}
-              reactions={reactions}
-            />
-          </div>
-
-          {/* outgoing */}
-          <div className="flex flex-col items-end gap-1 msg-enter" style={{ animationDelay: '0.25s' }}>
-            <OutBubble
-              onHold={() => setHeldMessage({ type: 'text', text: "Yeah! I've been playing around with it lately, it's actually super fun to use", isOutgoing: true, msgId: 'so-text-1' })}
-              reaction={reactions['so-text-1']}
-            >
-              Yeah! I've been playing around with it lately, it's actually super fun to use
-            </OutBubble>
-            <Ts time="12:29" />
-          </div>
-
-          {/* incoming */}
-          <div className="msg-enter" style={{ animationDelay: '0.35s' }}>
-            <IncomingCluster2
-              onOpen={(images, index) => setLightbox({ images, index })}
-              time="12:31"
-              onHold={({ text, msgId }) => setHeldMessage({ type: 'text', text, isOutgoing: false, msgId })}
-              reactions={reactions}
-            />
-          </div>
-
-          {/* outgoing voice */}
-          <div className="flex flex-col items-end gap-1 msg-enter" style={{ animationDelay: '0.45s' }}>
-            <VoiceMessage onHold={() => setHeldMessage({ type: 'voice', duration: 20, isOutgoing: true })} />
-            <Ts time="12:31" />
-          </div>
-
-          <div className="msg-enter" style={{ animationDelay: '0.55s' }}>
-            <TypingIndicator />
-          </div>
-
-          {/* sent messages — small gap between consecutive same-sender messages */}
-          {sentMessages.length > 0 && (
-            <div className="flex flex-col gap-2">
-              {sentMessages.map((msg, i) => {
-                const isLastInMinute = i === sentMessages.length - 1 || sentMessages[i + 1].time !== msg.time
-                return (
-                  <div key={i} className="flex flex-col items-end gap-1 msg-enter">
-                    {msg.type === 'voice' ? (
-                      <SentVoiceBubble
-                        duration={msg.duration}
-                        onHold={() => setHeldMessage({ type: 'voice', duration: msg.duration, isOutgoing: true, msgId: msg.id })}
-                      />
-                    ) : msg.type === 'images' ? (
-                      <SentImageMessage
-                        images={msg.urls}
-                        onOpen={(imgs, idx) => setLightbox({ images: imgs, index: idx })}
-                        onHold={() => setHeldMessage({ type: 'images', isOutgoing: true, msgId: msg.id })}
-                      />
-                    ) : (
-                      <OutBubble
-                        onHold={() => setHeldMessage({ type: 'text', text: msg.text, isOutgoing: true, msgId: msg.id })}
+          {messageGroups.map((group, groupIdx) => {
+            if (group.isOutgoing) {
+              return (
+                <div key={`og-${groupIdx}`} className="flex flex-col gap-2">
+                  {group.messages.map((msg) => (
+                    <div key={msg.id} className="flex flex-col items-end gap-1 msg-enter">
+                      {msg.type === 'voice' ? (
+                        <>
+                          {msg.replyTo && (
+                            <div className="bg-[#1f2937] rounded-[10px] px-3 py-2 border-l-2 border-white/30 max-w-[220px]">
+                              <p className="text-white/60 text-[11px] font-medium leading-4">{msg.replyTo.senderName}</p>
+                              <p className="text-white text-[11px] font-medium leading-4 truncate">{msg.replyTo.text}</p>
+                            </div>
+                          )}
+                          <SentVoiceBubble
+                            duration={msg.duration}
+                            onHold={() => setHeldMessage({ type: 'voice', duration: msg.duration, isOutgoing: true, msgId: msg.id })}
+                            reaction={reactions[msg.id]}
+                            onRemoveReaction={() => removeReaction(msg.id)}
+                          />
+                        </>
+                      ) : msg.type === 'images' ? (
+                        <>
+                          {msg.replyTo && (
+                            <div className="bg-[#1f2937] rounded-[10px] px-3 py-2 border-l-2 border-white/30 max-w-[220px]">
+                              <p className="text-white/60 text-[11px] font-medium leading-4">{msg.replyTo.senderName}</p>
+                              <p className="text-white text-[11px] font-medium leading-4 truncate">{msg.replyTo.text}</p>
+                            </div>
+                          )}
+                          <SentImageMessage
+                            images={msg.urls}
+                            onOpen={(imgs, idx) => setLightbox({ images: imgs, index: idx })}
+                            onHold={() => setHeldMessage({ type: 'images', isOutgoing: true, msgId: msg.id })}
+                            reaction={reactions[msg.id]}
+                            onRemoveReaction={() => removeReaction(msg.id)}
+                          />
+                        </>
+                      ) : (
+                        <OutBubble
+                          onHold={() => setHeldMessage({ type: 'text', text: msg.text, isOutgoing: true, msgId: msg.id })}
+                          reaction={reactions[msg.id]}
+                          onRemoveReaction={() => removeReaction(msg.id)}
+                          replyTo={msg.replyTo}
+                        >
+                          {msg.text}
+                        </OutBubble>
+                      )}
+                      <Ts time={msg.time} />
+                    </div>
+                  ))}
+                </div>
+              )
+            } else {
+              return (
+                <div key={`ig-${groupIdx}`} className="flex items-end gap-2.5 msg-enter">
+                  <UserAvatar />
+                  <div className="flex flex-col gap-1.5">
+                    {group.messages.map(msg => (
+                      <InBubble
+                        key={msg.id}
+                        onHold={() => setHeldMessage({ type: 'text', text: msg.text, isOutgoing: false, msgId: msg.id })}
                         reaction={reactions[msg.id]}
+                        onRemoveReaction={() => removeReaction(msg.id)}
                       >
                         {msg.text}
-                      </OutBubble>
-                    )}
-                    {isLastInMinute && <Ts time={msg.time} />}
+                      </InBubble>
+                    ))}
+                    <Ts time={group.messages[group.messages.length - 1].time} align="left" />
                   </div>
-                )
-              })}
+                </div>
+              )
+            }
+          })}
+
+          {isTyping && (
+            <div className="msg-enter">
+              <TypingIndicator />
             </div>
           )}
 
@@ -1064,11 +1419,15 @@ export default function MobileChatUI() {
         onSend={handleSend}
         isRecording={isRecording}
         isPaused={isPaused}
+        isPlayingBack={isPlayingBack}
         onToggleRecording={handleToggleRecording}
         onPauseResume={handlePauseResume}
+        onPlayback={handlePlayback}
         onDeleteRecording={handleDeleteRecording}
         recordingTime={recordingTime}
         onImagePick={handleImagePick}
+        replyTo={replyTo}
+        onCancelReply={() => setReplyTo(null)}
       />
     </div>
   )
