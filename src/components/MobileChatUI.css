@@ -1,0 +1,183 @@
+/* ── Layout ──────────────────────────────────────────────────── */
+
+.chat-scroll {
+  padding-top: 168px;
+  padding-bottom: 140px;
+}
+
+/* ── Status bar ──────────────────────────────────────────────── */
+
+.chat-statusbar {
+  height: 64px;
+  display: block;
+  width: 100%;
+  user-select: none;
+}
+
+/* ── Stacked photo message ───────────────────────────────────── */
+
+.chat-img-back {
+  position: absolute;
+  width: 164px;
+  height: 200px;
+  border-radius: 20px;
+  overflow: hidden;
+  transform: rotate(-17.5deg);
+  top: 20px;
+  left: 12px;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.chat-img-front {
+  position: absolute;
+  width: 164px;
+  height: 200px;
+  border-radius: 20px;
+  overflow: hidden;
+  top: 20px;
+  right: 0;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* tx_front - tx_back = 80 + gap → gap=16: tx_back=-72, tx_front=+24 */
+.stacked-images:hover .chat-img-back  { transform: rotate(0deg) translateX(-72px); }
+.stacked-images:hover .chat-img-front { transform: translateX(24px); }
+
+/* ── Lightbox ────────────────────────────────────────────────── */
+
+.lightbox {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: lb-open 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+@keyframes lb-open {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.lightbox img {
+  max-width: 88%;
+  max-height: 76%;
+  object-fit: contain;
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+@keyframes lb-slide-from-right {
+  from { transform: translateX(48px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes lb-slide-from-left {
+  from { transform: translateX(-48px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+@keyframes lb-fade-img {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.lb-enter-right { animation: lb-slide-from-right 0.25s ease; }
+.lb-enter-left  { animation: lb-slide-from-left  0.25s ease; }
+.lb-enter-fade  { animation: lb-fade-img          0.2s  ease; }
+
+.lb-dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 20px;
+  pointer-events: none;
+}
+
+.lb-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transition: background 0.2s ease;
+}
+
+.lb-dot.active { background: white; }
+
+/* ── Bubble sizing ───────────────────────────────────────────── */
+
+.chat-bubble {
+  width: fit-content;
+  max-width: 250px;
+}
+
+/* ── Input field ─────────────────────────────────────────────── */
+
+.chat-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  color: white;
+  font-family: 'General Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.044rem;
+  line-height: 1.25rem;
+}
+
+.chat-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Waveform bar heights ────────────────────────────────────── */
+
+.bar-h-8  { height: 8px;  }
+.bar-h-10 { height: 10px; }
+.bar-h-12 { height: 12px; }
+.bar-h-14 { height: 14px; }
+.bar-h-16 { height: 16px; }
+.bar-h-24 { height: 24px; }
+
+/* ── Voice message playback bars ────────────────────────────── */
+
+.voice-bar {
+  background-color: black;
+  transition: background-color 0.2s ease;
+}
+
+.voice-bar.filled   { background-color: rgba(0, 0, 0, 1);   }
+.voice-bar.unfilled { background-color: rgba(0, 0, 0, 0.15); }
+
+/* ── Recording waveform ──────────────────────────────────────── */
+
+@keyframes rec-pulse {
+  0%, 100% { transform: scaleY(0.55); }
+  50%       { transform: scaleY(1);    }
+}
+
+.rec-bar {
+  transform-origin: center;
+  animation: rec-pulse 0.9s ease-in-out infinite;
+}
+
+.rec-bars .rec-bar:nth-child(1)  { animation-delay:   0ms; }
+.rec-bars .rec-bar:nth-child(2)  { animation-delay:  55ms; }
+.rec-bars .rec-bar:nth-child(3)  { animation-delay: 110ms; }
+.rec-bars .rec-bar:nth-child(4)  { animation-delay: 165ms; }
+.rec-bars .rec-bar:nth-child(5)  { animation-delay: 220ms; }
+.rec-bars .rec-bar:nth-child(6)  { animation-delay: 275ms; }
+.rec-bars .rec-bar:nth-child(7)  { animation-delay: 330ms; }
+.rec-bars .rec-bar:nth-child(8)  { animation-delay: 385ms; }
+.rec-bars .rec-bar:nth-child(9)  { animation-delay: 440ms; }
+.rec-bars .rec-bar:nth-child(10) { animation-delay: 385ms; }
+.rec-bars .rec-bar:nth-child(11) { animation-delay: 330ms; }
+.rec-bars .rec-bar:nth-child(12) { animation-delay: 275ms; }
+.rec-bars .rec-bar:nth-child(13) { animation-delay: 220ms; }
+.rec-bars .rec-bar:nth-child(14) { animation-delay: 165ms; }
+.rec-bars .rec-bar:nth-child(15) { animation-delay: 110ms; }
+.rec-bars .rec-bar:nth-child(16) { animation-delay:  55ms; }
